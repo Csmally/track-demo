@@ -64,17 +64,6 @@ export interface IntersectionObserverH5 {
   disconnect(): void;
 }
 
-const createIntersectionObserverMini = (self: Vue, options?: any) => {
-  const createObserver = uni.createIntersectionObserver as any;
-  return createObserver(self, {
-    ...options,
-    observeAll: true,
-    // #ifdef MP-WEIXIN
-    nativeMode: true,
-    // #endif
-  }) as IntersectionObserver;
-};
-
 const createIntersectionObserverH5 = (self: Vue, options?: any) => {
   let ob: any = null;
 
@@ -144,9 +133,6 @@ const createIntersectionObserverH5 = (self: Vue, options?: any) => {
   return ob;
 };
 
-export function createIntersectionObserver(self: Vue, isH5 = true) {
-  if (isH5) {
-    return createIntersectionObserverH5(self);
-  }
-  return createIntersectionObserverMini(self);
+export function createIntersectionObserver(self: Vue) {
+  return createIntersectionObserverH5(self);
 }

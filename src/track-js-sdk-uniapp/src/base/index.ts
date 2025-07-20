@@ -138,14 +138,15 @@ export default class TrackController {
     this.name = "";
     this.options = options;
     this.isSingle = options.isSingle === undefined ? false : options.isSingle;
-    this.httpHead = "https:";
-    this.configUrl = "trackerfeed.ddxq.mobi/getConfigsByPage";
+    this.httpHead = "http:";
+    this.configUrl = "localhost:7070/getConfigsByPage";
     this.currentKey = "";
     this.localKey = "DDMC_TRACK_CONFIG";
     this.localVersion = "DDMC_TRACK_VERSION";
     this.loggerParser = loggerParser;
     this.ignoreCoverageIndex = options.ignoreCoverageIndex || [];
     if (window) {
+      // 判断是否在iframe中
       // eslint-disable-next-line eqeqeq
       this.isInIframe = window.self != window.top;
     } else {
@@ -284,11 +285,11 @@ export default class TrackController {
   // 还有几种情况没做
   // 1. 接口未返回，直接退出页面，埋点丢失
   // 2. 接口未返回，页面崩溃，埋点丢失
-  private releaseCache(pageName: string) {
+  private releaseCache(pageName: any) {
     if (this.eventCache.has(pageName)) {
       const funcs = this.eventCache.get(pageName) || new Set();
       const funcsArr = Array.from(funcs || new Set());
-      funcsArr.forEach((func) => func());
+      // funcsArr.forEach((func) => func());
       this.eventCache.delete(pageName);
     }
   }

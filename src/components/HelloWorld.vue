@@ -3,13 +3,13 @@
     <div>普通元素</div>
     <div class="hello" @click="dianji(1, 2)">HelloWorld</div>
     <div class="box">
-      <VforComponent v-for="(item, index) in arr" :key="index"/>
+      <VforComponent v-for="(item, index) in arr" :key="index" :msg="index + 'aa'"/>
     </div>
     <div class="box">
-      <VforComponent v-for="(item, index) in arr" :key="index"/>
+      <VforComponent v-for="(item, index) in arr" :key="index" :msg="index + 'bb'"/>
     </div>
-    <VifComponent v-if="isShow"/>
-    <VifComponent v-if="isShow"/>
+    <VifComponent info="aa" v-if="isShow"/>
+    <VifComponent info="bb" v-if="isShow"/>
   </div>
 </template>
 

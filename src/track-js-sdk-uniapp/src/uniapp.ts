@@ -5,7 +5,6 @@ import { createIntersectionObserver } from "../utils/interSectionObserver";
 import VueMixin from "./base/vueMixin";
 import { getEleXPath } from "../utils/utils";
 
-declare const uni: any;
 declare const getCurrentPages: any;
 
 interface uniConstructorType extends ConstructorType {
@@ -55,28 +54,10 @@ export class TUniapp extends Base {
   }
 
   protected requestConfig(pageName: string): any {
-    const { os, appName, appVersion } = this.options;
-    const data: any = {
-      os,
-      app_id: appName,
-      app_version: appVersion,
-      page: pageName,
-    };
-    if (!this.options.isPro) {
-      data.trial = true;
-    }
     return new Promise((resolve, reject) => {
-      uni.request({
-        url: `${this.httpHead}//${this.configUrl}`,
-        data,
-        enableHttp2: true,
-        async success(res: any) {
-          resolve(res.data || {});
-        },
-        fail() {
-          reject();
-        },
-      });
+      fetch(`${this.httpHead}//${this.configUrl}?pageName=${pageName}`)
+        .then((res) => resolve(res.json))
+        .catch((error) => reject(error));
     });
   }
 
@@ -84,39 +65,16 @@ export class TUniapp extends Base {
     data: any,
     key: string = this.localKey
   ): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (uni) {
-        uni.setStorage({
-          key,
-          data,
-          success() {
-            resolve();
-          },
-          fail() {
-            reject();
-          },
-        });
-      } else {
-        reject();
-      }
+    return new Promise((resolve) => {
+      localStorage.setItem(key, JSON.stringify(data));
+      resolve();
     });
   }
 
   protected getLocalData(key: string = this.localKey): Promise<any> {
-    return new Promise((resolve, reject) => {
-      if (uni) {
-        uni.getStorage({
-          key,
-          success(res: any) {
-            resolve(res.data);
-          },
-          fail() {
-            resolve(null);
-          },
-        });
-      } else {
-        reject(new Error("uni.getStorage is not function"));
-      }
+    return new Promise((resolve) => {
+      const res = localStorage.getItem(key);
+      resolve(JSON.parse(res!));
     });
   }
 
@@ -129,12 +87,13 @@ export class TUniapp extends Base {
   }
 
   private resetUniRouterFunc(name: string) {
-    const uniFunc = uni[name];
-    const that = this;
-    uni[name] = function (params: any) {
-      (that as any)[`pre${name}`](params);
-      uniFunc(params);
-    };
+    // const uniFunc = uni[name];
+    // const that = this;
+    // uni[name] = function (params: any) {
+    // 	(that as any)[`pre${name}`](params);
+    // 	uniFunc(params);
+    // };
+    // TODO: 后续更改需要的函数方法
   }
 
   private mixin(): VueConstructor {
@@ -223,25 +182,13 @@ export class TUniapp extends Base {
         if (this.isTrackPage) {
           this.pageElapseByNative();
         }
-        const {
-          degradeMask,
-          degradeConfig = {},
-          degradeTrack,
-        } = (Vue.prototype as any).$store.state?.globalData || {};
         // 降级模式且开关打开情况不继续埋点
-        if (degradeMask && degradeTrack && degradeConfig?.trackClose) {
-          return;
-        }
-        if (!uniReg.test(currentName) && !this.isCloseTrackObserve) {
-          let timer = 1000;
-          // #ifdef MP-ALIPAY
-          timer = 3000;
-          // #endif
+        if (!uniReg.test(currentName)) {
+          const timer = 1000;
           const observe = (el: string | Element) => {
-            const ob = createIntersectionObserver(
-              this,
-              that.options.isH5
-            ).relativeToViewport({ bottom: 20 });
+            const ob = createIntersectionObserver(this).relativeToViewport({
+              bottom: 20,
+            });
             if (ob) {
               ob.observe(el, (res: any) => {
                 this.pageTrackDomObserve(res);
@@ -259,21 +206,17 @@ export class TUniapp extends Base {
           ) {
             setTimeout(() => {
               try {
-                if (that.options.isH5) {
-                  const el = document.getElementsByClassName(
-                    this.vForTrackIndexClassKey
-                  );
-                  if (el) {
-                    Array.from(el).forEach((element: Element) => {
-                      const path = getEleXPath(element) + element.innerHTML;
-                      if (!cache[path]) {
-                        observe(element);
-                        cache[path] = 1;
-                      }
-                    });
-                  }
-                } else {
-                  observe(`.${this.vForTrackIndexClassKey}`);
+                const el = document.getElementsByClassName(
+                  this.vForTrackIndexClassKey
+                );
+                if (el) {
+                  Array.from(el).forEach((element: Element) => {
+                    const path = getEleXPath(element) + element.innerHTML;
+                    if (!cache[path]) {
+                      observe(element);
+                      cache[path] = 1;
+                    }
+                  });
                 }
               } catch (e) {
                 console.error(e);
